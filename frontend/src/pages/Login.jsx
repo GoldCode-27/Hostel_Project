@@ -19,9 +19,9 @@ const Login = () => {
     if (!cleanEmail || !password) {
       setError('Please enter both email and password.');
       return;
-    }
-
+    }    
     try {
+      
       const res = await axios.post(`${API_BASE_URL}/auth/login`, { email: cleanEmail, password });
       login(res.data); // Save to context
       navigate('/dashboard'); // Go to dashboard!
@@ -60,11 +60,15 @@ const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)} 
           />
+
+
+
+
           <button type="submit" className="w-full bg-blue-600 text-white py-3.5 rounded-2xl font-black hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">
             Login
           </button>
           <p className="text-center text-sm text-slate-500 mt-6">
-            New resident? <Link to="/signup" className="text-blue-600 font-bold hover:underline">Apply now</Link>
+            New resident? <Link to="/signup" className="text-blue-600 font-bold hover:underline">Sign Up</Link>
           </p>
         </form>
       </div>

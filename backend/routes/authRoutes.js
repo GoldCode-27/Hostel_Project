@@ -7,6 +7,7 @@ const User = require('../models/User');
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
 const digitsOnly = (value) => String(value || '').replace(/\D/g, '');
 
+
 // --- SIGNUP ROUTE ---
 router.post('/register', async (req, res) => {
   try {
