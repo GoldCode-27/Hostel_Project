@@ -1,75 +1,109 @@
-🏨 Hostel Management System
+# Hostel Management System
 
-Welcome to the Hostel Management System! This is a full-stack web application built using the MERN stack (MongoDB, Express.js, React.js, Node.js) and styled with TailwindCSS.
+A full-stack hostel operations app built with React, Vite, Tailwind CSS, Express, and MongoDB. It provides role-based tools for residents, staff, and administrators to manage room assignments, maintenance, announcements, and billing.
 
-If you have downloaded this code and want to run it on your own computer, just follow these simple steps!
+## What the System Does
 
-🛑 Prerequisites
+- **Residents** can register and sign in, view their dashboard and assigned room, submit maintenance requests, view invoices, pay invoices through PhonePe, and read in-app notifications.
+- **Staff** can manage resident records and rooms, assign or remove residents from rooms, review maintenance requests, generate invoices, and send announcements.
+- **Administrators** have staff-management permissions in addition to the staff workflows.
+- Maintenance status changes and newly generated invoices create notifications for the affected resident.
+- Room records include room number, capacity, AC type, monthly price, status, and assigned occupants.
+- Invoice totals include the room fee, optional additional charges, discounts, and late fees.
 
-Before you start, make sure you have the following installed on your computer:
+Public pages include Home, About, Contact, Login, and Signup. Dashboard pages are protected and display features according to the signed-in user's role. Public signup always creates a resident account; staff accounts are created by administrators.
 
-Node.js: Download it from nodejs.org (Choose the LTS version).
+## How It Works
 
-VS Code: Or any other code editor you prefer.
+1. The React app renders the public site and protected dashboard pages. Vite serves it locally, normally at `http://localhost:5173`.
+2. The frontend sends HTTP requests to the Express API. Its default API prefix is `/api`; during local development, Vite proxies these requests to `http://localhost:5000`.
+3. Express mounts routers for authentication, rooms, users, maintenance, notifications, and billing. The API checks the MongoDB connection before handling requests.
+4. Mongoose reads and writes users, rooms, maintenance requests, invoices, and notifications in MongoDB.
+5. Login verifies the stored password hash and returns a signed JWT. The frontend stores the token and sends it as a Bearer token for protected API requests. The backend verifies the token and checks the user's role before allowing protected actions.
+6. PhonePe payment requests redirect the resident to the payment gateway. A callback and status check update the invoice payment state.
 
-🚀 How to Run the Project
+## API Route Groups
 
-You will need to open two separate terminals in your code editor. One terminal will run the backend (server), and the other will run the frontend (user interface).
+All routes are under `/api`:
 
-Step 1: Set up the Backend (Database & Server)
+| Route group      | Main operations                                                                                                               |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `/auth`          | Resident registration and login (`/register`, `/login`)                                                                       |
+| `/rooms`         | List rooms, view a resident's room, create/update/delete rooms, assign/remove residents                                       |
+| `/users`         | List and manage residents; administrator-only staff management                                                                |
+| `/maintenance`   | Submit a request, list a resident's requests, review requests, update status                                                  |
+| `/notifications` | Send notifications, list the signed-in user's notifications, mark notifications read                                          |
+| `/billing`       | Generate and list invoices, view a resident's invoices, initiate/check PhonePe payments, administrator/staff payment override |
 
-Open the project folder in VS Code.
+Most routes require a valid JWT. Admin/staff-only actions are additionally checked by role. Authentication endpoints and the PhonePe callback are exceptions to the JWT requirement.
 
-Open a terminal and go inside the backend folder:
+## Run Locally
 
+### Prerequisites
+
+- Node.js and npm
+- A MongoDB database reachable from your machine (local MongoDB or MongoDB Atlas)
+
+### 1. Configure and start the backend
+
+From the project root:
+
+```bash
 cd backend
-
-
-Install all the required backend packages:
-
 npm install
+```
 
+Create `backend/.env` with at least:
 
-CRUCIAL STEP: You need to connect your own database.
-
-Inside the backend folder, create a new file and name it exactly .env
-
-Open the .env file and paste the following, replacing the link with your actual MongoDB connection string:
-
+```env
 PORT=5000
-MONGO_URI=your_mongodb_connection_string_here
+MONGO_URI=mongodb_connection_string
+JWT_SECRET=replace_with_a_long_random_secret
+```
 
+Start the API:
 
-Start the backend server:
+```bash
+npm start
+```
 
-node server.js
+The server connects to MongoDB before it starts listening. Keep this terminal open. If the database connection fails, the API will not start; check `MONGO_URI`, database credentials, and MongoDB network access.
 
+### 2. Start the frontend
 
-(You should see a message saying "Successfully connected to MongoDB!" If you do, leave this terminal open and running!)
+Open a second terminal from the project root:
 
-Step 2: Set up the Frontend (React UI)
-
-Open a new, second terminal window in VS Code (keep the first one running).
-
-Go inside the frontend folder:
-
+```bash
 cd frontend
-
-
-Install all the required frontend packages:
-
 npm install
-
-
-Start the React frontend:
-
 npm run dev
+```
 
+Open the local URL printed by Vite, usually `http://localhost:5173`. Keep both the backend and frontend terminals running. Local frontend requests use the Vite proxy configured in `frontend/vite.config.js`.
 
-It will give you a local link (usually http://localhost:5173). Ctrl + Click (or Cmd + Click) that link to open the app in your browser!
+For a separately deployed frontend, set `VITE_API_BASE_URL` to the backend API URL ending in `/api`, for example `https://your-api.example.com/api`.
 
-🛠️ Troubleshooting
+## Optional PhonePe Configuration
 
-Blank screen or "Cannot GET"? Make sure your .env file is inside the backend folder and contains the correct MongoDB connection link.
+PhonePe payments require gateway credentials. Add these to `backend/.env` when configuring the integration:
 
-Network Error? Make sure you have BOTH terminals running at the same time. The frontend needs the backend to work!
+```env
+PHONEPE_CLIENT_ID=your_client_id
+PHONEPE_CLIENT_SECRET=your_client_secret
+PHONEPE_CLIENT_VERSION=1
+PHONEPE_BASE_URL=https://api-preprod.phonepe.com/apis/pg-sandbox
+BACKEND_URL=https://your-backend.example.com
+FRONTEND_URL=https://your-frontend.example.com
+```
+
+`BACKEND_URL` and `FRONTEND_URL` are used to construct payment callbacks and return redirects. The default PhonePe URL is the sandbox/UAT endpoint; use production credentials and the production endpoint only when deploying for production.
+
+## Development Admin Account
+
+After configuring `backend/.env`, you can run the seed script from the `backend` directory:
+
+```bash
+node seed.js
+```
+
+It creates `admin@gmail.com` with the development password `admin123` if that email does not already exist. Change or remove these credentials before using the system with real data. Never commit `.env` files or production secrets.
