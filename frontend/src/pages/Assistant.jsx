@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { Bot, Send, Sparkles } from "lucide-react";
+import { Bot, LoaderCircle, Send, Sparkles } from "lucide-react";
 import { API_BASE_URL } from "../config/api";
 
 const Assistant = () => {
@@ -94,9 +94,17 @@ const Assistant = () => {
             </div>
           ))}
           {loading && (
-            <p className="text-sm text-gray-500" role="status">
-              Checking the approved help information...
-            </p>
+            <div
+              className="flex items-center gap-2 text-[#065F46]"
+              role="status"
+            >
+              <LoaderCircle
+                size={18}
+                className="animate-spin"
+                aria-hidden="true"
+              />
+              <span className="sr-only">Waiting for Gemini</span>
+            </div>
           )}
         </div>
 
@@ -107,24 +115,34 @@ const Assistant = () => {
           <label htmlFor="assistant-question" className="sr-only">
             Ask Gemini a question
           </label>
-          <div className="flex items-end gap-2">
+          <div className="flex flex-col items-start gap-2">
             <textarea
               id="assistant-question"
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
+              onKeyDown={(event) => {
+                if (
+                  event.key === "Enter" &&
+                  !event.shiftKey &&
+                  !event.nativeEvent.isComposing
+                ) {
+                  event.preventDefault();
+                  if (!loading && question.trim().length >= 2) {
+                    event.currentTarget.form?.requestSubmit();
+                  }
+                }
+              }}
               maxLength={1200}
               rows={2}
               placeholder="Ask Gemini anything..."
-              className="min-h-12 flex-1 resize-y rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#065F46] focus:ring-2 focus:ring-[#065F46]/15"
+              className="min-h-12 w-full resize-y rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#065F46] focus:ring-2 focus:ring-[#065F46]/15"
             />
             <button
               type="submit"
               disabled={loading || question.trim().length < 2}
-              aria-label="Send question"
-              title="Send question"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[#065F46] text-white hover:bg-[#064E3B] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-[#065F46] px-4 py-2 text-sm font-semibold text-white hover:bg-[#064E3B] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Send size={17} />
+              <Send size={16} /> Send
             </button>
           </div>
         </form>

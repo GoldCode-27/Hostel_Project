@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { Bot, MessageCircle, Send, X } from "lucide-react";
+import { Bot, LoaderCircle, MessageCircle, Send, X } from "lucide-react";
 import { API_BASE_URL } from "../config/api";
 
 const FloatingAssistant = () => {
@@ -108,9 +108,17 @@ const FloatingAssistant = () => {
               </div>
             ))}
             {loading && (
-              <p className="text-xs text-gray-500" role="status">
-                Checking approved answers...
-              </p>
+              <div
+                className="flex items-center gap-2 p-1 text-[#065F46]"
+                role="status"
+              >
+                <LoaderCircle
+                  size={16}
+                  className="animate-spin"
+                  aria-hidden="true"
+                />
+                <span className="sr-only">Waiting for Gemini</span>
+              </div>
             )}
           </div>
 
