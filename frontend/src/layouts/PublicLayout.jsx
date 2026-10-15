@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { Building2, Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X, ArrowRight } from "lucide-react";
 
 const navLinks = [
   { to: "/", label: "Home" },
@@ -41,14 +41,16 @@ const PublicLayout = () => {
             {/* Logo */}
             <Link
               to="/"
-              className="flex items-center gap-2.5 group"
-              aria-label="HostelCore home"
+              className="flex items-center gap-2 group"
+              aria-label="ማረፊያ home"
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center shadow-md shadow-indigo-200 group-hover:shadow-indigo-300 transition-shadow">
-                <Building2 size={16} className="text-white" />
-              </div>
-              <span className="font-bold text-[17px] text-slate-900 tracking-tight">
-                Hostel<span className="text-indigo-600">Core</span>
+              <img
+                src="/logo.jpg"
+                alt="ማረፊያ logo"
+                className="h-12 w-[66px] shrink-0 object-contain"
+              />
+              <span className="whitespace-nowrap text-base font-extrabold text-[#065F46]">
+                ማረፊያ
               </span>
             </Link>
 
@@ -140,11 +142,13 @@ const PublicLayout = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-md flex items-center justify-center">
-                <Building2 size={13} className="text-white" />
-              </div>
-              <span className="text-sm font-bold text-slate-800">
-                Hostel<span className="text-indigo-600">Core</span>
+              <img
+                src="/logo.jpg"
+                alt="ማረፊያ logo"
+                className="h-10 w-14 shrink-0 object-contain"
+              />
+              <span className="whitespace-nowrap text-sm font-bold text-[#065F46]">
+                ማረፊያ
               </span>
             </div>
             <div className="flex gap-5 text-sm text-slate-500">
@@ -161,8 +165,8 @@ const PublicLayout = () => {
           </div>
           <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-slate-400">
             <span>
-              &copy; {new Date().getFullYear()} HostelCore Management. All
-              rights reserved.
+              &copy; {new Date().getFullYear()} ማረፊያ Management. All rights
+              reserved.
             </span>
             <span>Built for smarter campus living.</span>
           </div>

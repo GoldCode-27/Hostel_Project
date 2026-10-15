@@ -115,7 +115,7 @@ const Assistant = () => {
           <label htmlFor="assistant-question" className="sr-only">
             Ask Gemini a question
           </label>
-          <div className="flex flex-col items-start gap-2">
+          <div className="relative">
             <textarea
               id="assistant-question"
               value={question}
@@ -135,14 +135,16 @@ const Assistant = () => {
               maxLength={1200}
               rows={2}
               placeholder="Ask Gemini anything..."
-              className="min-h-12 w-full resize-y rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#065F46] focus:ring-2 focus:ring-[#065F46]/15"
+              className="min-h-20 w-full resize-y rounded-md border border-gray-300 px-3 py-2 pb-12 pr-12 text-sm text-gray-900 outline-none focus:border-[#065F46] focus:ring-2 focus:ring-[#065F46]/15"
             />
             <button
               type="submit"
               disabled={loading || question.trim().length < 2}
-              className="inline-flex items-center justify-center gap-2 rounded-md bg-[#065F46] px-4 py-2 text-sm font-semibold text-white hover:bg-[#064E3B] disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Send question"
+              title="Send question"
+              className="absolute bottom-2 right-2 flex h-9 w-9 items-center justify-center rounded-md bg-[#065F46] text-white hover:bg-[#064E3B] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Send size={16} /> Send
+              <Send size={16} />
             </button>
           </div>
         </form>

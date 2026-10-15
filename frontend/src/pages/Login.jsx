@@ -41,9 +41,7 @@ const Login = () => {
             <p className="text-emerald-100 font-bold uppercase tracking-[0.25em] text-xs">
               Secure Access
             </p>
-            <h1 className="text-4xl font-black mt-4">
-              Welcome back to HostelCore.
-            </h1>
+            <h1 className="text-4xl font-black mt-4">Welcome back to ማረፊያ.</h1>
             <p className="text-slate-300 mt-4 leading-7">
               Manage rooms, payments, maintenance, and resident communication
               from a polished dashboard.

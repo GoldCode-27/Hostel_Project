@@ -49,7 +49,7 @@ const Home = () => {
                 A clean, modern way to manage your hostel.
               </h1>
               <p className="mt-6 text-lg text-slate-600 max-w-2xl leading-8">
-                HostelCore brings rooms, residents, maintenance, billing,
+                ማረፊያ brings rooms, residents, maintenance, billing,
                 announcements, and role dashboards into one fast and
                 professional web app.
               </p>

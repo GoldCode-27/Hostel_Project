@@ -15,13 +15,13 @@ const About = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             <p className="text-emerald-100 font-bold uppercase tracking-[0.25em] text-xs">
-              About HostelCore
+              About ማረፊያ
             </p>
             <h1 className="text-4xl sm:text-5xl font-black mt-4">
               A hostel management system designed for real campus work.
             </h1>
             <p className="text-slate-300 mt-6 text-lg leading-8">
-              HostelCore helps college administrators manage rooms, residents,
+              ማረፊያ helps college administrators manage rooms, residents,
               maintenance, billing, and announcements from a single modern
               interface.
             </p>

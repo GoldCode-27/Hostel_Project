@@ -1,4 +1,4 @@
-# Hostel Management System
+# ማረፊያ | Hostel Management System
 
 A full-stack hostel operations app built with React, Vite, Tailwind CSS, Express, and MongoDB. It provides role-based tools for residents, staff, and administrators to manage room assignments, maintenance, announcements, and billing.
 

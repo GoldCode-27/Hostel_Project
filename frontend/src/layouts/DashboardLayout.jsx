@@ -205,22 +205,15 @@ const DashboardLayout = () => {
         <div
           className={`px-5 py-4 flex items-center justify-between border-b ${theme.sidebarBorder}`}
         >
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-9 h-9 ${theme.logoBg} rounded-2xl flex items-center justify-center shadow-md ${theme.logoShadow} ring-2 ${theme.logoRing}`}
-            >
-              <span className="text-white font-black text-base leading-none">
-                H
-              </span>
-            </div>
-            <div>
-              <h1 className="text-slate-800 font-black text-[15px] tracking-tight leading-none">
-                HostelCore
-              </h1>
-              <p className="text-[10px] text-slate-400 mt-0.5 tracking-wide font-medium">
-                Smart operations
-              </p>
-            </div>
+          <div className="flex min-w-0 items-center gap-2">
+            <img
+              src="/logo.jpg"
+              alt="ማረፊያ logo"
+              className="h-12 w-[66px] shrink-0 object-contain"
+            />
+            <span className="truncate text-base font-extrabold text-slate-800">
+              ማረፊያ
+            </span>
           </div>
           <button
             onClick={toggleSidebar}
@@ -326,7 +319,7 @@ const DashboardLayout = () => {
               {/* Breadcrumb */}
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="text-slate-300 text-xs font-semibold hidden sm:inline tracking-wide">
-                  HostelCore
+                  ማረፊያ
                 </span>
                 <span className="text-slate-200 hidden sm:inline text-sm">
                   ›
@@ -380,7 +373,7 @@ const DashboardLayout = () => {
           <Outlet />
         </div>
       </main>
-      <FloatingAssistant />
+      {location.pathname !== "/dashboard/assistant" && <FloatingAssistant />}
     </div>
   );
 };
