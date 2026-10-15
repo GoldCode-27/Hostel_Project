@@ -6,7 +6,7 @@ const Contact = () => {
     <div className="bg-slate-50 min-h-[calc(100vh-8rem)]">
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid lg:grid-cols-[0.85fr_1.15fr] gap-8">
-          <div className="rounded-3xl bg-slate-950 text-white p-8 lg:p-10">
+          <div className="rounded-3xl bg-[#065F46] text-white p-8 lg:p-10">
             <p className="text-blue-300 font-bold uppercase tracking-[0.25em] text-xs">
               Contact Us
             </p>
