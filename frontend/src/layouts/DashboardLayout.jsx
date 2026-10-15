@@ -18,6 +18,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import NotificationBell from "../components/NotificationBell";
+import FloatingAssistant from "../components/FloatingAssistant";
 
 // ── Soft pastel role palettes ─────────────────────────────────────────────
 const ROLE_THEME = {
@@ -379,6 +380,7 @@ const DashboardLayout = () => {
           <Outlet />
         </div>
       </main>
+      <FloatingAssistant />
     </div>
   );
 };
