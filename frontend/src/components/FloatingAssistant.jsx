@@ -61,7 +61,7 @@ const FloatingAssistant = () => {
         <section
           id="floating-assistant-panel"
           aria-label="Hostel assistant chat"
-          className="mb-3 flex h-[min(32rem,calc(100dvh-6rem))] w-[calc(100vw-2rem)] max-w-sm flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-2xl"
+          className="mb-0 flex h-[min(32rem,calc(100dvh-2rem))] w-[calc(100vw-2rem)] max-w-sm flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-2xl"
         >
           <header className="flex items-center justify-between bg-[#065F46] px-4 py-3 text-white">
             <div className="flex items-center gap-2">
@@ -142,17 +142,18 @@ const FloatingAssistant = () => {
         </section>
       )}
 
-      <button
-        type="button"
-        onClick={() => setIsOpen((current) => !current)}
-        aria-expanded={isOpen}
-        aria-controls="floating-assistant-panel"
-        aria-label={isOpen ? "Close assistant chat" : "Open assistant chat"}
-        title={isOpen ? "Close assistant chat" : "Open assistant chat"}
-        className="ml-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#065F46] text-white shadow-lg transition hover:bg-[#064E3B] focus:outline-none focus:ring-4 focus:ring-[#065F46]/20"
-      >
-        {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
-      </button>
+      {!isOpen && (
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          aria-expanded={false}
+          aria-label="Open assistant chat"
+          title="Open assistant chat"
+          className="ml-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#065F46] text-white shadow-lg transition hover:bg-[#064E3B] focus:outline-none focus:ring-4 focus:ring-[#065F46]/20"
+        >
+          <MessageCircle size={22} />
+        </button>
+      )}
     </div>
   );
 };
