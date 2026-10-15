@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS maintenance_requests (
   resident_id BIGINT UNSIGNED NOT NULL,
   title VARCHAR(255) NOT NULL,
   description TEXT NOT NULL,
+  category ENUM('Plumbing', 'Electrical', 'HVAC', 'Cleaning', 'Furniture', 'Security', 'Other') NOT NULL DEFAULT 'Other',
   priority ENUM('Low', 'Medium', 'High', 'Emergency') NOT NULL DEFAULT 'Low',
   status ENUM('Pending', 'In Progress', 'Resolved') NOT NULL DEFAULT 'Pending',
   issue_pic LONGTEXT NULL,

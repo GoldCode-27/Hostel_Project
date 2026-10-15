@@ -11,7 +11,12 @@ import {
   Sparkles,
 } from "lucide-react";
 
-const AssistancePanel = ({ assistance, onApplyPriority, onUseSummary }) => (
+const AssistancePanel = ({
+  assistance,
+  onApplyCategory,
+  onApplyPriority,
+  onUseSummary,
+}) => (
   <section
     className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-4"
     aria-live="polite"
@@ -43,8 +48,17 @@ const AssistancePanel = ({ assistance, onApplyPriority, onUseSummary }) => (
         </ul>
       </div>
     )}
-    {(onApplyPriority || onUseSummary) && (
+    {(onApplyCategory || onApplyPriority || onUseSummary) && (
       <div className="mt-4 flex flex-wrap gap-2">
+        {onApplyCategory && (
+          <button
+            type="button"
+            onClick={onApplyCategory}
+            className="rounded-md border border-indigo-300 bg-white px-3 py-1.5 text-sm font-medium text-indigo-800 hover:bg-indigo-100"
+          >
+            Use suggested category
+          </button>
+        )}
         {onApplyPriority && (
           <button
             type="button"
@@ -78,6 +92,7 @@ const Maintenance = () => {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    category: "Other",
     priority: "Low",
     issuePic: "",
   });
@@ -169,6 +184,7 @@ const Maintenance = () => {
       setFormData({
         title: "",
         description: "",
+        category: "Other",
         priority: "Low",
         issuePic: "",
       });
@@ -362,6 +378,26 @@ const Maintenance = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Issue Category
+                </label>
+                <select
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                  value={formData.category}
+                  onChange={(e) =>
+                    setFormData({ ...formData, category: e.target.value })
+                  }
+                >
+                  <option value="Plumbing">Plumbing</option>
+                  <option value="Electrical">Electrical</option>
+                  <option value="HVAC">HVAC</option>
+                  <option value="Cleaning">Cleaning</option>
+                  <option value="Furniture">Furniture</option>
+                  <option value="Security">Security</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Priority Level *
                 </label>
                 <select
@@ -423,6 +459,11 @@ const Maintenance = () => {
                   Submit Request
                 </button>
               </div>
+              <p className="text-xs text-gray-500">
+                The title and description are sent to Gemini for suggestions.
+                Review the response and avoid including sensitive personal
+                information.
+              </p>
             </div>
           </form>
           {draftAssistanceError && (
@@ -433,6 +474,12 @@ const Maintenance = () => {
           {draftAssistance && (
             <AssistancePanel
               assistance={draftAssistance}
+              onApplyCategory={() =>
+                setFormData((current) => ({
+                  ...current,
+                  category: draftAssistance.category,
+                }))
+              }
               onApplyPriority={() =>
                 setFormData((current) => ({
                   ...current,
@@ -497,6 +544,9 @@ const Maintenance = () => {
                         <AlertTriangle size={14} />
                       )}{" "}
                       Priority: {req.priority}
+                    </span>
+                    <span className="text-gray-500">
+                      Category: {req.category || "Other"}
                     </span>
 
                     {/* Admin Specific Data */}

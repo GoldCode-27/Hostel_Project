@@ -28,7 +28,7 @@ const seedAdmin = async () => {
       role: 'admin',
       contactNumber: '0000000000'
     });
-
+ 
     // 5. Save to database
     await adminUser.save();
     console.log('🎉 Admin user created successfully!');

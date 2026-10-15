@@ -17,12 +17,9 @@ router.post("/assist", protect, async (req, res) => {
   }
 
   if (req.user.role === "resident" && !req.user.assignedRoom) {
-    return res
-      .status(400)
-      .json({
-        message:
-          "Room assignment is required to request maintenance assistance",
-      });
+    return res.status(400).json({
+      message: "Room assignment is required to request maintenance assistance",
+    });
   }
 
   if (!title && !description) {
@@ -38,12 +35,10 @@ router.post("/assist", protect, async (req, res) => {
   }
 
   if (!process.env.GEMINI_API_KEY) {
-    return res
-      .status(503)
-      .json({
-        message:
-          "AI assistance is not configured. Set GEMINI_API_KEY on the backend.",
-      });
+    return res.status(503).json({
+      message:
+        "AI assistance is not configured. Set GEMINI_API_KEY on the backend.",
+    });
   }
 
   try {
@@ -54,17 +49,15 @@ router.post("/assist", protect, async (req, res) => {
     res.json(suggestion);
   } catch (err) {
     console.error("Gemini maintenance assistance error:", err.message);
-    res
-      .status(502)
-      .json({
-        message: "AI assistance is temporarily unavailable. Please try again.",
-      });
+    res.status(502).json({
+      message: "AI assistance is temporarily unavailable. Please try again.",
+    });
   }
 });
 
 router.post("/", protect, async (req, res) => {
   try {
-    const { title, description, priority, issuePic } = req.body;
+    const { title, description, category, priority, issuePic } = req.body;
 
     if (req.user.role !== "resident") {
       return res
@@ -73,16 +66,23 @@ router.post("/", protect, async (req, res) => {
     }
 
     if (!req.user.assignedRoom) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Room assignment is required before submitting a maintenance request",
-        });
+      return res.status(400).json({
+        message:
+          "Room assignment is required before submitting a maintenance request",
+      });
     }
 
     const cleanTitle = String(title || "").trim();
     const cleanDescription = String(description || "").trim();
+    const allowedCategories = [
+      "Plumbing",
+      "Electrical",
+      "HVAC",
+      "Cleaning",
+      "Furniture",
+      "Security",
+      "Other",
+    ];
     const allowedPriorities = ["Low", "Medium", "High", "Emergency"];
 
     if (cleanTitle.length < 3) {
@@ -97,6 +97,10 @@ router.post("/", protect, async (req, res) => {
         .json({ message: "Description must be at least 10 characters" });
     }
 
+    if (category && !allowedCategories.includes(category)) {
+      return res.status(400).json({ message: "Invalid category selected" });
+    }
+
     if (priority && !allowedPriorities.includes(priority)) {
       return res.status(400).json({ message: "Invalid priority selected" });
     }
@@ -105,6 +109,7 @@ router.post("/", protect, async (req, res) => {
       resident: req.user._id,
       title: cleanTitle,
       description: cleanDescription,
+      category: category || "Other",
       priority: priority || "Low",
       issuePic,
     });
