@@ -63,7 +63,7 @@ const FloatingAssistant = () => {
           aria-label="Hostel assistant chat"
           className="mb-3 flex h-[min(32rem,calc(100dvh-6rem))] w-[calc(100vw-2rem)] max-w-sm flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-2xl"
         >
-          <header className="flex items-center justify-between bg-emerald-800 px-4 py-3 text-white">
+          <header className="flex items-center justify-between bg-[#065F46] px-4 py-3 text-white">
             <div className="flex items-center gap-2">
               <Bot size={19} />
               <div>
@@ -99,7 +99,7 @@ const FloatingAssistant = () => {
                 <p
                   className={`max-w-[88%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm leading-5 ${
                     message.role === "user"
-                      ? "bg-emerald-800 text-white"
+                      ? "bg-[#065F46] text-white"
                       : "bg-gray-100 text-gray-800"
                   }`}
                 >
@@ -127,14 +127,14 @@ const FloatingAssistant = () => {
               onChange={(event) => setQuestion(event.target.value)}
               maxLength={1200}
               placeholder="Ask Gemini anything..."
-              className="h-10 min-w-0 flex-1 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
+              className="h-10 min-w-0 flex-1 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-[#065F46] focus:ring-2 focus:ring-[#065F46]/15"
             />
             <button
               type="submit"
               disabled={loading || question.trim().length < 2}
               aria-label="Send question"
               title="Send question"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-emerald-800 text-white hover:bg-emerald-900 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#065F46] text-white hover:bg-[#064E3B] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Send size={16} />
             </button>
@@ -149,7 +149,7 @@ const FloatingAssistant = () => {
         aria-controls="floating-assistant-panel"
         aria-label={isOpen ? "Close assistant chat" : "Open assistant chat"}
         title={isOpen ? "Close assistant chat" : "Open assistant chat"}
-        className="ml-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-800 text-white shadow-lg transition hover:bg-emerald-900 focus:outline-none focus:ring-4 focus:ring-emerald-200"
+        className="ml-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#065F46] text-white shadow-lg transition hover:bg-[#064E3B] focus:outline-none focus:ring-4 focus:ring-[#065F46]/20"
       >
         {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
       </button>

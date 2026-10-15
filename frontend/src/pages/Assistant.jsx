@@ -57,7 +57,7 @@ const Assistant = () => {
   return (
     <div className="mx-auto flex h-full max-w-4xl flex-col">
       <header className="mb-5 flex items-center gap-3">
-        <div className="rounded-lg bg-emerald-700 p-2 text-white">
+        <div className="rounded-lg bg-[#065F46] p-2 text-white">
           <Bot size={22} />
         </div>
         <div>
@@ -68,7 +68,7 @@ const Assistant = () => {
 
       <section className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">
         <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
-          <Sparkles size={16} className="text-emerald-700" />
+          <Sparkles size={16} className="text-[#065F46]" />
           Gemini can answer general questions. Verify important answers; do not
           share passwords or sensitive information.
         </div>
@@ -85,7 +85,7 @@ const Assistant = () => {
               <p
                 className={`max-w-[88%] whitespace-pre-wrap rounded-lg px-4 py-3 text-sm leading-6 ${
                   message.role === "user"
-                    ? "bg-emerald-800 text-white"
+                    ? "bg-[#065F46] text-white"
                     : "border border-gray-200 bg-gray-50 text-gray-800"
                 }`}
               >
@@ -115,14 +115,14 @@ const Assistant = () => {
               maxLength={1200}
               rows={2}
               placeholder="Ask Gemini anything..."
-              className="min-h-12 flex-1 resize-y rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
+              className="min-h-12 flex-1 resize-y rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#065F46] focus:ring-2 focus:ring-[#065F46]/15"
             />
             <button
               type="submit"
               disabled={loading || question.trim().length < 2}
               aria-label="Send question"
               title="Send question"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-emerald-800 text-white hover:bg-emerald-900 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[#065F46] text-white hover:bg-[#064E3B] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Send size={17} />
             </button>
