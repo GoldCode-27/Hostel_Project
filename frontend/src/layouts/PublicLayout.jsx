@@ -13,6 +13,7 @@ const PublicLayout = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const isHomePage = location.pathname === "/";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -30,14 +31,18 @@ const PublicLayout = () => {
         className={`
         sticky top-0 z-50 transition-all duration-300
         ${
-          scrolled
-            ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-200/80"
-            : "bg-white/80 backdrop-blur-sm border-b border-transparent"
+          isHomePage
+            ? scrolled
+              ? "bg-[#F0EFEA] shadow-sm border-b border-slate-200/80"
+              : "bg-[#F0EFEA] border-b border-transparent"
+            : scrolled
+              ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-200/80"
+              : "bg-white/80 backdrop-blur-sm border-b border-transparent"
         }
       `}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-[60px] items-center">
+          <div className="flex justify-between h-24 items-center">
             {/* Logo */}
             <Link
               to="/"
@@ -47,9 +52,9 @@ const PublicLayout = () => {
               <img
                 src="/logo.jpg"
                 alt="ማረፊያ logo"
-                className="h-12 w-[66px] shrink-0 object-contain"
+                className="h-40 w-[79px] shrink-0 object-contain"
               />
-              <span className="whitespace-nowrap text-base font-extrabold text-[#065F46]">
+              <span className="whitespace-nowrap text-xl font-extrabold text-[#065F46]">
                 ማረፊያ
               </span>
             </Link>
@@ -138,16 +143,18 @@ const PublicLayout = () => {
       </main>
 
       {/* FOOTER */}
-      <footer className="bg-white border-t border-slate-200">
+      <footer
+        className={`${isHomePage ? "bg-[#F0EFEA]" : "bg-white"} border-t border-slate-200`}
+      >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2.5">
               <img
                 src="/logo.jpg"
                 alt="ማረፊያ logo"
-                className="h-10 w-14 shrink-0 object-contain"
+                className="h-40 w-[79px] shrink-0 object-contain"
               />
-              <span className="whitespace-nowrap text-sm font-bold text-[#065F46]">
+              <span className="whitespace-nowrap text-base font-bold text-[#065F46]">
                 ማረፊያ
               </span>
             </div>

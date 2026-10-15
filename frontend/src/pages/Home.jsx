@@ -37,8 +37,8 @@ const Home = () => {
   const bars = [62, 78, 48, 86, 70, 92];
 
   return (
-    <div className="bg-slate-50 text-slate-900">
-      <section className="border-b border-slate-200 bg-white">
+    <div className="bg-[#F0EFEA] text-slate-900">
+      <section className="border-b border-slate-200 bg-[#F0EFEA]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-24">
           <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-12 items-center">
             <div>
@@ -106,7 +106,7 @@ const Home = () => {
                   {bars.map((height, index) => (
                     <div
                       key={index}
-                      className="flex-1 bg-blue-600"
+                      className="flex-1 bg-[#064E3B]"
                       style={{ height: `${height}%` }}
                     />
                   ))}

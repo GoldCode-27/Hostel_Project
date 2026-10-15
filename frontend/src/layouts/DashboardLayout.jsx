@@ -209,9 +209,9 @@ const DashboardLayout = () => {
             <img
               src="/logo.jpg"
               alt="ማረፊያ logo"
-              className="h-12 w-[66px] shrink-0 object-contain"
+              className="h-20 w-[59px] shrink-0 object-contain"
             />
-            <span className="truncate text-base font-extrabold text-slate-800">
+            <span className="truncate text-xl font-extrabold text-slate-800">
               ማረፊያ
             </span>
           </div>
