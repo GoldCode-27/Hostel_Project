@@ -10,7 +10,7 @@ const FloatingAssistant = () => {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      text: "Ask about using the hostel system, maintenance, rooms, or billing.",
+      text: "Ask me anything, including questions about the hostel system.",
     },
   ]);
 
@@ -68,9 +68,7 @@ const FloatingAssistant = () => {
               <Bot size={19} />
               <div>
                 <h2 className="text-sm font-semibold">Hostel assistant</h2>
-                <p className="text-xs text-emerald-100">
-                  Approved system answers only
-                </p>
+                <p className="text-xs text-emerald-100">General Gemini chat</p>
               </div>
             </div>
             <button
@@ -85,7 +83,8 @@ const FloatingAssistant = () => {
           </header>
 
           <div className="border-b border-gray-100 px-4 py-2 text-xs text-gray-500">
-            No live room, maintenance, or billing records are available here.
+            Verify important answers. Do not share passwords or sensitive
+            information.
           </div>
 
           <div
@@ -120,14 +119,14 @@ const FloatingAssistant = () => {
             className="flex items-center gap-2 border-t border-gray-200 p-3"
           >
             <label htmlFor="floating-assistant-question" className="sr-only">
-              Ask the hostel assistant
+              Ask Gemini a question
             </label>
             <input
               id="floating-assistant-question"
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
               maxLength={1200}
-              placeholder="Ask a system question..."
+              placeholder="Ask Gemini anything..."
               className="h-10 min-w-0 flex-1 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
             />
             <button

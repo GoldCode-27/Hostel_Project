@@ -1,11 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { protect } = require("../middleware/authMiddleware");
-const {
-  assistantFallback,
-  generateHostelAssistantAnswer,
-  isHostelAssistantQuestion,
-} = require("../utils/gemini");
+const { generateAssistantAnswer } = require("../utils/gemini");
 
 router.post("/chat", protect, async (req, res) => {
   const question = String(req.body.question || "").trim();
@@ -16,10 +12,6 @@ router.post("/chat", protect, async (req, res) => {
     });
   }
 
-  if (!isHostelAssistantQuestion(question)) {
-    return res.json({ answer: assistantFallback });
-  }
-
   if (!process.env.GEMINI_API_KEY) {
     return res.status(503).json({
       message:
@@ -28,8 +20,8 @@ router.post("/chat", protect, async (req, res) => {
   }
 
   try {
-    const result = await generateHostelAssistantAnswer(question);
-    res.json({ answer: result.supported ? result.answer : assistantFallback });
+    const answer = await generateAssistantAnswer(question);
+    res.json({ answer });
   } catch (err) {
     console.error("Hostel assistant error:", err.message);
     res.status(502).json({

@@ -6,7 +6,7 @@ A full-stack hostel operations app built with React, Vite, Tailwind CSS, Express
 
 - **Residents** can register and sign in, view their dashboard and assigned room, submit maintenance requests, view invoices, pay invoices through PhonePe, and read in-app notifications.
 - Residents can ask Gemini to summarize a maintenance draft, suggest its category and priority, and identify details that may be missing. Suggestions must be reviewed and are not submitted automatically.
-- All signed-in roles can use the hostel assistant for answers from an approved, fixed help brief. It refuses unrelated questions and has no access to live database records.
+- All signed-in roles can use Gemini chat for general questions. It does not access live hostel database records; users should verify important answers and avoid sharing sensitive information.
 - **Staff** can manage resident records and rooms, assign or remove residents from rooms, review maintenance requests, generate invoices, and send announcements.
 - Staff can request an AI review of an existing maintenance ticket; it does not change the saved ticket or its priority.
 - **Administrators** have staff-management permissions in addition to the staff workflows.
@@ -24,7 +24,7 @@ Public pages include Home, About, Contact, Login, and Signup. Dashboard pages ar
 4. Mongoose reads and writes users, rooms, maintenance requests, invoices, and notifications in MongoDB.
 5. Login verifies the stored password hash and returns a signed JWT. The frontend stores the token and sends it as a Bearer token for protected API requests. The backend verifies the token and checks the user's role before allowing protected actions.
 6. The maintenance assistance endpoint sends only the draft title and description to Gemini, along with the MySQL `maintenance_requests` schema as static context. Its structured response is displayed as a suggestion; applying a suggestion changes only the editable form, and the resident must still submit the request. Gemini does not query or update the database.
-7. The signed-in hostel assistant asks Gemini to classify one question into an approved intent; the backend returns fixed, reviewed answer text and never displays a free-form Gemini answer. It has no database access, tools, or persistent conversation history and returns a fixed fallback for unsupported questions.
+7. The signed-in chat sends the user's question to Gemini for a general response. It does not include live hostel records or conversation history.
 8. PhonePe payment requests redirect the resident to the payment gateway. A callback and status check update the invoice payment state.
 
 ## API Route Groups
@@ -37,7 +37,7 @@ All routes are under `/api`:
 | `/rooms`         | List rooms, view a resident's room, create/update/delete rooms, assign/remove residents                                       |
 | `/users`         | List and manage residents; administrator-only staff management                                                                |
 | `/maintenance`   | Get AI suggestions (`/assist`), submit a request, list a resident's requests, review requests, update status                  |
-| `/assistant`     | Answer signed-in users' questions from the approved system help brief (`/chat`)                                               |
+| `/assistant`     | Generate Gemini chat responses for signed-in users (`/chat`)                                                                  |
 | `/notifications` | Send notifications, list the signed-in user's notifications, mark notifications read                                          |
 | `/billing`       | Generate and list invoices, view a resident's invoices, initiate/check PhonePe payments, administrator/staff payment override |
 

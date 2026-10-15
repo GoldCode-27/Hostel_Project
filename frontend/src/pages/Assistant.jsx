@@ -8,7 +8,7 @@ const Assistant = () => {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      text: "Hello. Ask me about using the hostel management system, its roles, maintenance, billing, rooms, or notifications.",
+      text: "Hello. Ask me anything, including questions about the hostel management system.",
     },
   ]);
   const [loading, setLoading] = useState(false);
@@ -62,17 +62,15 @@ const Assistant = () => {
         </div>
         <div>
           <h1 className="text-xl font-bold text-gray-900">Hostel assistant</h1>
-          <p className="text-sm text-gray-600">
-            Help with the hostel management system
-          </p>
+          <p className="text-sm text-gray-600">General Gemini chat</p>
         </div>
       </header>
 
       <section className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">
         <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
           <Sparkles size={16} className="text-emerald-700" />
-          Replies come from approved system answers. Gemini cannot write
-          free-form replies or access live records.
+          Gemini can answer general questions. Verify important answers; do not
+          share passwords or sensitive information.
         </div>
 
         <div
@@ -107,7 +105,7 @@ const Assistant = () => {
           className="border-t border-gray-200 p-3 sm:p-4"
         >
           <label htmlFor="assistant-question" className="sr-only">
-            Ask about the hostel management system
+            Ask Gemini a question
           </label>
           <div className="flex items-end gap-2">
             <textarea
@@ -116,7 +114,7 @@ const Assistant = () => {
               onChange={(event) => setQuestion(event.target.value)}
               maxLength={1200}
               rows={2}
-              placeholder="Ask about roles, maintenance, billing, or rooms..."
+              placeholder="Ask Gemini anything..."
               className="min-h-12 flex-1 resize-y rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-100"
             />
             <button
