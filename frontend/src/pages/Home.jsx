@@ -20,7 +20,7 @@ const Home = () => {
     {
       icon: <CreditCard size={22} />,
       title: "Online Billing",
-      text: "Generate invoices and collect PhonePe UAT payments with verified payment status.",
+      text: "Generate invoices and collect Chapa payments with verified payment status.",
     },
     {
       icon: <Wrench size={22} />,
@@ -74,7 +74,7 @@ const Home = () => {
                 {[
                   ["128", "Residents"],
                   ["42", "Rooms"],
-                  ["₹84k", "Collected"],
+                  ["ETB 84k", "Collected"],
                   ["9", "Tickets"],
                 ].map(([value, label]) => (
                   <div

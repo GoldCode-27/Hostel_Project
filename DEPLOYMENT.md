@@ -2,7 +2,7 @@
 
 This project has two deployable apps:
 
-- `backend`: Express API for auth, rooms, billing, PhonePe, etc.
+- `backend`: Express API for auth, rooms, billing, Chapa, etc.
 - `frontend`: Vite React app.
 
 ## 1. Push To GitHub
@@ -36,10 +36,11 @@ Add backend environment variables in Vercel:
 ```env
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_random_secret
-PHONEPE_MERCHANT_ID=your_phonepe_client_id
-PHONEPE_SALT_KEY=your_phonepe_client_secret
-PHONEPE_SALT_INDEX=1
-PHONEPE_BASE_URL=https://api-preprod.phonepe.com/apis/pg-sandbox
+CHAPA_SECRET_KEY=your_chapa_secret_key
+CHAPA_API_BASE_URL=https://api.chapa.co/v1
+CHAPA_CURRENCY=ETB
+BACKEND_URL=https://your-backend-project.vercel.app
+FRONTEND_URL=https://your-frontend-project.vercel.app
 ```
 
 After deploy, your backend URL will look like:
@@ -71,6 +72,7 @@ Add frontend environment variable:
 
 ```env
 VITE_API_BASE_URL=https://your-backend-project.vercel.app/api
+VITE_BILLING_CURRENCY=ETB
 ```
 
 Deploy it. Your frontend URL will look like:
@@ -79,18 +81,12 @@ Deploy it. Your frontend URL will look like:
 https://your-frontend-project.vercel.app
 ```
 
-## 4. PhonePe Redirect Notes
+## 4. Chapa Callback Notes
 
-For deployed testing, the frontend sends its current origin to the backend when creating a payment, so PhonePe can redirect back to:
+Set `BACKEND_URL` to the public backend URL so Chapa can reach the payment callback. The customer return URL is the billing page on the frontend:
 
 ```text
 https://your-frontend-project.vercel.app/dashboard/billing
 ```
 
-If you later want a fixed frontend URL, add this backend env var in Vercel:
-
-```env
-FRONTEND_URL=https://your-frontend-project.vercel.app
-```
-
-For production PhonePe, replace sandbox credentials and base URL with production values from PhonePe.
+Use a valid Chapa secret key and ensure `CHAPA_CURRENCY` matches the currency enabled for your Chapa account. Keep `VITE_BILLING_CURRENCY` aligned with it.

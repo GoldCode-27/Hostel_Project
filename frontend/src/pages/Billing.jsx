@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { useSearchParams } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
+import { BILLING_CURRENCY, formatCurrency } from "../config/currency";
 import { AuthContext } from "../context/AuthContext";
 import {
   Receipt,
@@ -112,6 +113,7 @@ const Billing = () => {
 
         if (data.paymentState === "COMPLETED") return "COMPLETED";
         if (data.paymentState === "FAILED") return "FAILED";
+        if (data.paymentState === "MISMATCH") return "MISMATCH";
       } catch (error) {
         console.error("Payment verification failed", error);
       }
@@ -126,7 +128,6 @@ const Billing = () => {
     const handlePaymentRedirect = async () => {
       const latestInvoices = await fetchData();
 
-      // Check for PhonePe redirect callbacks
       const paymentStatus = searchParams.get("payment");
       if (!paymentStatus) return;
 
@@ -136,20 +137,20 @@ const Billing = () => {
           (invoice) => invoice.status === "Pending" && invoice.transactionId,
         )?._id;
 
-      if (paymentStatus === "success") {
-        alert("Payment Successful! Your invoice has been updated.");
-      } else {
-        const verifiedState = await verifyPaymentAfterRedirect(invoiceId);
+      const verifiedState = await verifyPaymentAfterRedirect(invoiceId);
 
-        if (verifiedState === "COMPLETED") {
-          alert("Payment Successful! Your invoice has been updated.");
-        } else if (verifiedState === "FAILED") {
-          alert("Payment Failed. Please try again.");
-        } else {
-          alert(
-            "Payment is still processing. Please check billing again after a few seconds.",
-          );
-        }
+      if (verifiedState === "COMPLETED") {
+        alert("Payment Successful! Your invoice has been updated.");
+      } else if (verifiedState === "FAILED") {
+        alert("Payment Failed. Please try again.");
+      } else if (verifiedState === "MISMATCH") {
+        alert(
+          "Payment could not be verified. Please contact the administration.",
+        );
+      } else {
+        alert(
+          "Payment is still processing. Please check billing again after a few seconds.",
+        );
       }
 
       setSearchParams({});
@@ -158,18 +159,15 @@ const Billing = () => {
     handlePaymentRedirect();
   }, [user, searchParams, setSearchParams]);
 
-  // --- PHONEPE PAYMENT HANDLER ---
   const handleOnlinePayment = async (id) => {
     setPaymentLoading(true);
     try {
-      // Calls our backend to create a PhonePe checkout order.
       const { data } = await axios.post(
         `${API_BASE_URL}/billing/${id}/initiate-payment`,
         { returnUrl: window.location.origin },
         getConfig(),
       );
 
-      // Redirect user to the PhonePe Test Gateway
       window.location.href = data.redirectUrl;
     } catch (error) {
       alert(
@@ -221,6 +219,7 @@ const Billing = () => {
 
   // --- INVOICE DOWNLOAD LOGIC ---
   const handleDownloadInvoice = (inv) => {
+    const invoiceCurrency = inv.currency || "INR";
     const printWindow = window.open("", "_blank");
     const html = `
       <html>
@@ -278,20 +277,20 @@ const Billing = () => {
             <thead>
               <tr>
                 <th>Description</th>
-                <th class="text-right">Amount (₹)</th>
+                <th class="text-right">Amount (${invoiceCurrency})</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td>Room Rent (Base Fee)</td>
-                <td class="text-right">₹${inv.roomFee}</td>
+                <td class="text-right">${formatCurrency(inv.roomFee, invoiceCurrency)}</td>
               </tr>
               ${
                 inv.additionalAmount > 0
                   ? `
               <tr>
                 <td>Additional Service: ${inv.additionalService || "Misc Services"}</td>
-                <td class="text-right">₹${inv.additionalAmount}</td>
+                <td class="text-right">${formatCurrency(inv.additionalAmount, invoiceCurrency)}</td>
               </tr>`
                   : ""
               }
@@ -300,7 +299,7 @@ const Billing = () => {
                   ? `
               <tr>
                 <td>Late Fee Penalty</td>
-                <td class="text-right">₹${inv.lateFee}</td>
+                <td class="text-right">${formatCurrency(inv.lateFee, invoiceCurrency)}</td>
               </tr>`
                   : ""
               }
@@ -309,13 +308,13 @@ const Billing = () => {
                   ? `
               <tr>
                 <td>Discount Applied</td>
-                <td class="text-right" style="color: #166534;">- ₹${inv.discount}</td>
+                <td class="text-right" style="color: #166534;">- ${formatCurrency(inv.discount, invoiceCurrency)}</td>
               </tr>`
                   : ""
               }
               <tr class="total-row">
                 <td>Total Amount Payable</td>
-                <td class="text-right">₹${inv.totalAmount}</td>
+                <td class="text-right">${formatCurrency(inv.totalAmount, invoiceCurrency)}</td>
               </tr>
             </tbody>
           </table>
@@ -431,10 +430,10 @@ const Billing = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-black text-gray-900">
-                      ₹{inv.totalAmount}
+                      {formatCurrency(inv.totalAmount, inv.currency || "INR")}
                     </div>
                     <div className="text-[10px] text-gray-400 font-medium">
-                      Base: ₹{inv.roomFee}
+                      Base: {formatCurrency(inv.roomFee, inv.currency || "INR")}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -459,14 +458,13 @@ const Billing = () => {
 
                       {inv.status !== "Paid" ? (
                         <>
-                          {/* 🔴 THIS IS WHERE THE PHONEPE BUTTON SHOWS FOR RESIDENTS */}
                           {user?.role === "resident" ? (
                             <button
                               onClick={() => handleOnlinePayment(inv._id)}
                               disabled={paymentLoading}
                               className="inline-flex items-center gap-1.5 bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-1.5 rounded-lg text-xs font-black transition-all shadow-sm disabled:opacity-60"
                             >
-                              <CreditCard size={14} /> Pay via PhonePe
+                              <CreditCard size={14} /> Pay via Chapa
                             </button>
                           ) : (
                             <button
@@ -619,7 +617,7 @@ const Billing = () => {
 
               <div>
                 <label className="block text-xs font-black text-gray-400 uppercase mb-2 tracking-widest">
-                  Extra Amount (₹)
+                  Extra Amount ({BILLING_CURRENCY})
                 </label>
                 <input
                   type="number"
@@ -638,7 +636,7 @@ const Billing = () => {
 
               <div>
                 <label className="block text-xs font-black text-red-400 uppercase mb-2 tracking-widest">
-                  Late Fee (₹)
+                  Late Fee ({BILLING_CURRENCY})
                 </label>
                 <input
                   type="number"
@@ -654,7 +652,7 @@ const Billing = () => {
 
               <div>
                 <label className="block text-xs font-black text-green-600 uppercase mb-2 tracking-widest">
-                  Discount (₹)
+                  Discount ({BILLING_CURRENCY})
                 </label>
                 <input
                   type="number"
