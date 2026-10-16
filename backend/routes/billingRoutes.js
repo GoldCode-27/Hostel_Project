@@ -52,6 +52,13 @@ const normalizeAmount = (value) => {
   return Number.isFinite(amount) ? amount : NaN;
 };
 
+const getChapaErrorDetails = (err) => ({
+  message: err?.message || String(err),
+  code: err?.code,
+  status: err?.response?.status,
+  response: err?.response?.data,
+});
+
 const applyChapaVerificationToInvoice = async (invoice, verification) => {
   const transaction = verification?.data;
   if (!transaction || transaction.tx_ref !== invoice.transactionId)
@@ -280,7 +287,7 @@ router.post("/:id/initiate-payment", protect, async (req, res) => {
   } catch (err) {
     console.error(
       "Chapa initialization error:",
-      err.response?.data || err.message,
+      JSON.stringify(getChapaErrorDetails(err), null, 2),
     );
     res.status(502).json({
       message:
@@ -314,7 +321,7 @@ router.post("/payment-callback", async (req, res) => {
   } catch (err) {
     console.error(
       "Chapa callback verification error:",
-      err.response?.data || err.message,
+      JSON.stringify(getChapaErrorDetails(err), null, 2),
     );
     return res
       .status(502)
@@ -361,7 +368,7 @@ router.post("/:id/refresh-payment", protect, async (req, res) => {
   } catch (err) {
     console.error(
       "Chapa status verification error:",
-      err.response?.data || err.message,
+      JSON.stringify(getChapaErrorDetails(err), null, 2),
     );
     res.status(502).json({
       message:

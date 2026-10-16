@@ -101,6 +101,7 @@ const Billing = () => {
 
   const verifyPaymentAfterRedirect = async (invoiceId) => {
     if (!invoiceId) return "UNKNOWN";
+    let hadSuccessfulCheck = false;
 
     for (let attempt = 0; attempt < 6; attempt += 1) {
       try {
@@ -109,6 +110,7 @@ const Billing = () => {
           {},
           getConfig(),
         );
+        hadSuccessfulCheck = true;
         await fetchData();
 
         if (data.paymentState === "COMPLETED") return "COMPLETED";
@@ -121,7 +123,7 @@ const Billing = () => {
       if (attempt < 5) await sleep(2000);
     }
 
-    return "PENDING";
+    return hadSuccessfulCheck ? "PENDING" : "ERROR";
   };
 
   useEffect(() => {
@@ -146,6 +148,10 @@ const Billing = () => {
       } else if (verifiedState === "MISMATCH") {
         alert(
           "Payment could not be verified. Please contact the administration.",
+        );
+      } else if (verifiedState === "ERROR") {
+        alert(
+          "Could not verify payment with Chapa. Please check billing again shortly or contact the administration.",
         );
       } else {
         alert(
