@@ -240,7 +240,7 @@ router.post("/:id/initiate-payment", protect, async (req, res) => {
       return res.status(400).json({ message: "Payment return URL is missing" });
     }
 
-    const txRef = `CHAPA-${invoice._id}-${Date.now()}-${crypto.randomBytes(6).toString("hex")}`;
+    const txRef = `CH-${Date.now()}-${crypto.randomBytes(8).toString("hex")}`;
     invoice.transactionId = txRef;
     invoice.status = "Pending";
     await invoice.save();
@@ -261,7 +261,7 @@ router.post("/:id/initiate-payment", protect, async (req, res) => {
       callback_url: callbackUrl,
       return_url: withPaymentStatus(returnUrl, "pending", invoice._id),
       customization: {
-        title: "Hostel bill payment",
+        title: "Hostel invoice",
         description: `Payment for ${invoice.month}`,
       },
     };

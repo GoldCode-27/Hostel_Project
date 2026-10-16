@@ -9,3 +9,4 @@ module.exports = {
   backendUrl: trimTrailingSlash(process.env.BACKEND_URL),
   frontendUrl: trimTrailingSlash(process.env.FRONTEND_URL),
 };
+
