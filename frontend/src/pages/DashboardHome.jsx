@@ -416,6 +416,7 @@ const DashboardHome = () => {
     },
   ];
   const billTrend = data.bills
+    .filter((bill) => (bill.currency || "INR") === BILLING_CURRENCY)
     .slice(0, 6)
     .reverse()
     .map((b) => Number(b.totalAmount || 0));
