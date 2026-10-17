@@ -1,6 +1,8 @@
-import React, { useState, useContext } from "react";
+import React, { useEffect, useRef, useState, useContext } from "react";
+import axios from "axios";
 import { Outlet, Navigate, Link, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { API_BASE_URL } from "../config/api";
 import {
   LayoutDashboard,
   Users,
@@ -16,6 +18,8 @@ import {
   ChevronRight,
   Sparkles,
   MessageCircle,
+  Camera,
+  ChevronDown,
 } from "lucide-react";
 import NotificationBell from "../components/NotificationBell";
 import FloatingAssistant from "../components/FloatingAssistant";
@@ -115,9 +119,34 @@ const ROLE_THEME = {
 };
 
 const DashboardLayout = () => {
-  const { user, authLoading, logout } = useContext(AuthContext);
+  const { user, authLoading, logout, updateUser } = useContext(AuthContext);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isSavingProfilePicture, setIsSavingProfilePicture] = useState(false);
+  const [profileMessage, setProfileMessage] = useState("");
+  const profileMenuRef = useRef(null);
+  const profileInputRef = useRef(null);
   const location = useLocation();
+
+  useEffect(() => {
+    if (!isProfileMenuOpen) return undefined;
+
+    const closeOnOutsideClick = (event) => {
+      if (!profileMenuRef.current?.contains(event.target)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setIsProfileMenuOpen(false);
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isProfileMenuOpen]);
 
   if (authLoading) {
     return (
@@ -134,6 +163,41 @@ const DashboardLayout = () => {
 
   const theme = ROLE_THEME[user.role] || ROLE_THEME.resident;
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+
+  const handleProfilePictureChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) {
+      setProfileMessage("Choose an image smaller than 5 MB.");
+      return;
+    }
+
+    setIsSavingProfilePicture(true);
+    setProfileMessage("");
+
+    try {
+      const profilePic = await resizeProfilePicture(file);
+      const { data } = await axios.put(
+        `${API_BASE_URL}/users/me/profile-picture`,
+        { profilePic },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+      updateUser({ profilePic: data.profilePic });
+      setProfileMessage("Profile photo updated.");
+    } catch (error) {
+      setProfileMessage(
+        error.response?.data?.message || "Could not update profile photo.",
+      );
+    } finally {
+      setIsSavingProfilePicture(false);
+    }
+  };
 
   const getNavItems = () => {
     const base = [
@@ -270,11 +334,11 @@ const DashboardLayout = () => {
           <div
             className={`flex items-center gap-3 mb-3 p-3 rounded-2xl ${theme.userCardBg} border ${theme.userCardBorder} shadow-sm`}
           >
-            <div
-              className={`w-9 h-9 rounded-xl ${theme.avatarBg} flex items-center justify-center text-white font-black text-sm shadow ${theme.avatarShadow} ring-2 ring-white shrink-0`}
-            >
-              {user.name?.charAt(0)?.toUpperCase() || "U"}
-            </div>
+            <Avatar
+              user={user}
+              className="h-9 w-9 rounded-xl text-sm"
+              theme={theme}
+            />
             <div className="flex-1 min-w-0">
               <p
                 className={`text-sm font-bold truncate leading-tight ${theme.userName}`}
@@ -289,8 +353,10 @@ const DashboardLayout = () => {
             </div>
           </div>
           <button
+            type="button"
+            data-button-variant="signout"
             onClick={logout}
-            className={`flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold text-slate-400 rounded-xl transition-all duration-150 ${theme.logoutHover}`}
+            className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-400 transition-all duration-150 ${theme.logoutHover}`}
           >
             <LogOut size={13} />
             Sign out
@@ -358,12 +424,80 @@ const DashboardLayout = () => {
                 {user.role}
               </span>
 
-              {/* Mini avatar */}
-              <div
-                className={`hidden sm:flex w-8 h-8 rounded-xl ${theme.avatarBg} items-center justify-center text-white font-black text-xs shadow-sm ${theme.avatarShadow} ring-2 ring-white shrink-0`}
-              >
-                {user.name?.charAt(0)?.toUpperCase() || "U"}
+              <div className="relative" ref={profileMenuRef}>
+                <input
+                  ref={profileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleProfilePictureChange}
+                />
+                <button
+                  type="button"
+                  aria-label="Open profile menu"
+                  aria-expanded={isProfileMenuOpen}
+                  onClick={() => setIsProfileMenuOpen((open) => !open)}
+                  className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[#064E3B] shadow-md ring-2 ring-emerald-100"
+                >
+                  <Avatar
+                    user={user}
+                    className="absolute inset-0 h-full w-full rounded-full text-xs"
+                    theme={theme}
+                    branded
+                  />
+                </button>
+                {isProfileMenuOpen && (
+                  <div className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-64 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+                    <div className="flex items-center gap-3 border-b border-slate-100 px-1 pb-3">
+                      <Avatar
+                        user={user}
+                        className="h-10 w-10 rounded-xl text-sm"
+                        theme={theme}
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-slate-800">
+                          {user.name}
+                        </p>
+                        <p className="truncate text-xs text-slate-500">
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={isSavingProfilePicture}
+                      onClick={() => profileInputRef.current?.click()}
+                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-60"
+                    >
+                      <Camera size={16} />
+                      {isSavingProfilePicture
+                        ? "Saving photo..."
+                        : "Change profile photo"}
+                    </button>
+                    {profileMessage && (
+                      <p
+                        role="status"
+                        className="px-1 pt-2 text-xs text-slate-600"
+                      >
+                        {profileMessage}
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      data-button-variant="signout"
+                      onClick={logout}
+                      className="mt-2 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
+                    >
+                      <LogOut size={16} /> Sign out
+                    </button>
+                  </div>
+                )}
               </div>
+              <ChevronDown
+                size={14}
+                className="text-slate-400"
+                aria-hidden="true"
+              />
             </div>
           </div>
         </header>
@@ -377,5 +511,50 @@ const DashboardLayout = () => {
     </div>
   );
 };
+
+const Avatar = ({ user, className, theme, branded = false }) => (
+  <span
+    className={`relative flex shrink-0 items-center justify-center overflow-hidden font-black text-white ${branded ? "bg-[#064E3B]" : theme.avatarBg} ${className}`}
+  >
+    {user.profilePic ? (
+      <img
+        src={user.profilePic}
+        alt=""
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+    ) : (
+      user.name?.charAt(0)?.toUpperCase() || "U"
+    )}
+  </span>
+);
+
+const resizeProfilePicture = (file) =>
+  new Promise((resolve, reject) => {
+    const imageUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      URL.revokeObjectURL(imageUrl);
+      const canvas = document.createElement("canvas");
+      const scale = Math.min(1, 512 / Math.max(image.width, image.height));
+      canvas.width = Math.round(image.width * scale);
+      canvas.height = Math.round(image.height * scale);
+      const context = canvas.getContext("2d");
+
+      if (!context) {
+        reject(new Error("Could not process this image."));
+        return;
+      }
+
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.82));
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(imageUrl);
+      reject(new Error("Could not read this image."));
+    };
+    image.src = imageUrl;
+  });
 
 export default DashboardLayout;

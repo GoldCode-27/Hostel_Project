@@ -10,6 +10,23 @@
   ::selection {
     @apply bg-blue-600 text-white;
   }
+
+  button:not([data-button-variant="signout"]) {
+    background-color: #064e3b !important;
+    border-color: #064e3b !important;
+    color: white !important;
+  }
+
+  button:not([data-button-variant="signout"]):hover {
+    background-color: #053d2e !important;
+    border-color: #053d2e !important;
+    color: white !important;
+  }
+
+  button:not([data-button-variant="signout"]):disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
 }
 
 @layer components {

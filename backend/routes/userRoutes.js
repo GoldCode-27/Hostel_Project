@@ -79,6 +79,38 @@ router.get("/residents", protect, isAdminOrStaff, async (req, res) => {
   }
 });
 
+router.put("/me/profile-picture", protect, async (req, res) => {
+  try {
+    const profilePic = String(req.body.profilePic || "");
+    const imageMatch = profilePic.match(
+      /^data:image\/(?:jpeg|png|webp);base64,([A-Za-z0-9+/]+={0,2})$/,
+    );
+
+    if (!imageMatch) {
+      return res
+        .status(400)
+        .json({ message: "Choose a valid JPEG, PNG, or WebP image" });
+    }
+
+    if (Buffer.byteLength(imageMatch[1], "base64") > 512 * 1024) {
+      return res
+        .status(413)
+        .json({
+          message: "Profile image must be smaller than 512 KB after processing",
+        });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.profilePic = profilePic;
+    await user.save();
+    res.json({ profilePic: user.profilePic });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.post("/residents", protect, isAdminOrStaff, async (req, res) => {
   try {
     const {
@@ -106,11 +138,9 @@ router.post("/residents", protect, isAdminOrStaff, async (req, res) => {
       !String(guardianName || "").trim() ||
       !String(courseDetails || "").trim()
     ) {
-      return res
-        .status(400)
-        .json({
-          message: "Address, guardian name, and course details are required",
-        });
+      return res.status(400).json({
+        message: "Address, guardian name, and course details are required",
+      });
     }
 
     const cleanEmail = email.trim().toLowerCase();
