@@ -1,9 +1,18 @@
-import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
-import { useSearchParams } from 'react-router-dom';
-import { API_BASE_URL } from '../config/api';
-import { AuthContext } from '../context/AuthContext';
-import { Receipt, Plus, CheckCircle, Clock, CreditCard, AlertCircle, Download } from 'lucide-react';
+import React, { useState, useEffect, useContext } from "react";
+import axios from "axios";
+import { useSearchParams } from "react-router-dom";
+import { API_BASE_URL } from "../config/api";
+import { BILLING_CURRENCY, formatCurrency } from "../config/currency";
+import { AuthContext } from "../context/AuthContext";
+import {
+  Receipt,
+  Plus,
+  CheckCircle,
+  Clock,
+  CreditCard,
+  AlertCircle,
+  Download,
+} from "lucide-react";
 
 const Billing = () => {
   const { user } = useContext(AuthContext);
@@ -13,32 +22,37 @@ const Billing = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
-    residentId: '', month: '', additionalService: '', 
-    additionalAmount: 0, discount: 0, lateFee: 0, dueDate: ''
+    residentId: "",
+    month: "",
+    additionalService: "",
+    additionalAmount: 0,
+    discount: 0,
+    lateFee: 0,
+    dueDate: "",
   });
 
   const getConfig = () => ({
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
   });
 
   const fetchData = async () => {
     if (!user) return;
     try {
-      const isManager = user.role === 'admin' || user.role === 'staff';
+      const isManager = user.role === "admin" || user.role === "staff";
       const billingRequest = axios.get(
         isManager ? `${API_BASE_URL}/billing` : `${API_BASE_URL}/billing/my`,
-        getConfig()
+        getConfig(),
       );
 
       if (isManager) {
         const [billingData, residentsData] = await Promise.all([
           billingRequest,
-          axios.get(`${API_BASE_URL}/users/residents`, getConfig())
+          axios.get(`${API_BASE_URL}/users/residents`, getConfig()),
         ]);
         setInvoices(billingData.data);
-        setResidents(residentsData.data.filter(r => r.assignedRoom));
+        setResidents(residentsData.data.filter((r) => r.assignedRoom));
         return billingData.data;
       } else {
         const { data } = await billingRequest;
@@ -46,7 +60,7 @@ const Billing = () => {
         return data;
       }
     } catch (error) {
-      console.error('Error fetching billing data', error);
+      console.error("Error fetching billing data", error);
       setInvoices([]);
       return [];
     } finally {
@@ -57,71 +71,92 @@ const Billing = () => {
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const validateInvoiceForm = () => {
-    const month = formData.month.trim().replace(/\s+/g, ' ');
+    const month = formData.month.trim().replace(/\s+/g, " ");
     const additionalAmount = Number(formData.additionalAmount || 0);
     const discount = Number(formData.discount || 0);
     const lateFee = Number(formData.lateFee || 0);
 
-    if (!formData.residentId) return 'Please select a resident.';
-    if (month.length < 3) return 'Please enter a valid billing month.';
-    if (!formData.dueDate) return 'Please select a due date.';
-    if ([additionalAmount, discount, lateFee].some((amount) => Number.isNaN(amount) || amount < 0)) {
-      return 'Amounts must be valid zero or positive numbers.';
+    if (!formData.residentId) return "Please select a resident.";
+    if (month.length < 3) return "Please enter a valid billing month.";
+    if (!formData.dueDate) return "Please select a due date.";
+    if (
+      [additionalAmount, discount, lateFee].some(
+        (amount) => Number.isNaN(amount) || amount < 0,
+      )
+    ) {
+      return "Amounts must be valid zero or positive numbers.";
     }
 
-    const duplicateInvoice = invoices.some((invoice) => (
-      invoice.resident?._id === formData.residentId &&
-      invoice.month?.trim().toLowerCase() === month.toLowerCase()
-    ));
+    const duplicateInvoice = invoices.some(
+      (invoice) =>
+        invoice.resident?._id === formData.residentId &&
+        invoice.month?.trim().toLowerCase() === month.toLowerCase(),
+    );
 
-    if (duplicateInvoice) return `An invoice for ${month} already exists for this resident.`;
+    if (duplicateInvoice)
+      return `An invoice for ${month} already exists for this resident.`;
 
-    return '';
+    return "";
   };
 
   const verifyPaymentAfterRedirect = async (invoiceId) => {
-    if (!invoiceId) return 'UNKNOWN';
+    if (!invoiceId) return "UNKNOWN";
+    let hadSuccessfulCheck = false;
 
     for (let attempt = 0; attempt < 6; attempt += 1) {
       try {
-        const { data } = await axios.post(`${API_BASE_URL}/billing/${invoiceId}/refresh-payment`, {}, getConfig());
+        const { data } = await axios.post(
+          `${API_BASE_URL}/billing/${invoiceId}/refresh-payment`,
+          {},
+          getConfig(),
+        );
+        hadSuccessfulCheck = true;
         await fetchData();
 
-        if (data.paymentState === 'COMPLETED') return 'COMPLETED';
-        if (data.paymentState === 'FAILED') return 'FAILED';
+        if (data.paymentState === "COMPLETED") return "COMPLETED";
+        if (data.paymentState === "FAILED") return "FAILED";
+        if (data.paymentState === "MISMATCH") return "MISMATCH";
       } catch (error) {
-        console.error('Payment verification failed', error);
+        console.error("Payment verification failed", error);
       }
 
       if (attempt < 5) await sleep(2000);
     }
 
-    return 'PENDING';
+    return hadSuccessfulCheck ? "PENDING" : "ERROR";
   };
 
   useEffect(() => {
     const handlePaymentRedirect = async () => {
       const latestInvoices = await fetchData();
 
-      // Check for PhonePe redirect callbacks
-      const paymentStatus = searchParams.get('payment');
+      const paymentStatus = searchParams.get("payment");
       if (!paymentStatus) return;
 
-      const invoiceId = searchParams.get('invoiceId') ||
-        latestInvoices?.find((invoice) => invoice.status === 'Pending' && invoice.transactionId)?._id;
+      const invoiceId =
+        searchParams.get("invoiceId") ||
+        latestInvoices?.find(
+          (invoice) => invoice.status === "Pending" && invoice.transactionId,
+        )?._id;
 
-      if (paymentStatus === 'success') {
+      const verifiedState = await verifyPaymentAfterRedirect(invoiceId);
+
+      if (verifiedState === "COMPLETED") {
         alert("Payment Successful! Your invoice has been updated.");
+      } else if (verifiedState === "FAILED") {
+        alert("Payment Failed. Please try again.");
+      } else if (verifiedState === "MISMATCH") {
+        alert(
+          "Payment could not be verified. Please contact the administration.",
+        );
+      } else if (verifiedState === "ERROR") {
+        alert(
+          "Could not verify payment with Chapa. Please check billing again shortly or contact the administration.",
+        );
       } else {
-        const verifiedState = await verifyPaymentAfterRedirect(invoiceId);
-
-        if (verifiedState === 'COMPLETED') {
-          alert("Payment Successful! Your invoice has been updated.");
-        } else if (verifiedState === 'FAILED') {
-          alert("Payment Failed. Please try again.");
-        } else {
-          alert("Payment is still processing. Please check billing again after a few seconds.");
-        }
+        alert(
+          "Payment is still processing. Please check billing again after a few seconds.",
+        );
       }
 
       setSearchParams({});
@@ -130,21 +165,20 @@ const Billing = () => {
     handlePaymentRedirect();
   }, [user, searchParams, setSearchParams]);
 
-  // --- PHONEPE PAYMENT HANDLER ---
   const handleOnlinePayment = async (id) => {
     setPaymentLoading(true);
     try {
-      // Calls our backend to create a PhonePe checkout order.
       const { data } = await axios.post(
         `${API_BASE_URL}/billing/${id}/initiate-payment`,
         { returnUrl: window.location.origin },
-        getConfig()
+        getConfig(),
       );
-      
-      // Redirect user to the PhonePe Test Gateway
+
       window.location.href = data.redirectUrl;
     } catch (error) {
-      alert(error.response?.data?.message || "Failed to initiate payment gateway.");
+      alert(
+        error.response?.data?.message || "Failed to initiate payment gateway.",
+      );
       setPaymentLoading(false);
     }
   };
@@ -170,13 +204,17 @@ const Billing = () => {
     }
 
     try {
-      await axios.post(`${API_BASE_URL}/billing`, {
-        ...formData,
-        month: formData.month.trim().replace(/\s+/g, ' '),
-        additionalAmount: Number(formData.additionalAmount || 0),
-        discount: Number(formData.discount || 0),
-        lateFee: Number(formData.lateFee || 0)
-      }, getConfig());
+      await axios.post(
+        `${API_BASE_URL}/billing`,
+        {
+          ...formData,
+          month: formData.month.trim().replace(/\s+/g, " "),
+          additionalAmount: Number(formData.additionalAmount || 0),
+          discount: Number(formData.discount || 0),
+          lateFee: Number(formData.lateFee || 0),
+        },
+        getConfig(),
+      );
       setIsModalOpen(false);
       fetchData();
       alert("Invoice generated successfully!");
@@ -187,7 +225,8 @@ const Billing = () => {
 
   // --- INVOICE DOWNLOAD LOGIC ---
   const handleDownloadInvoice = (inv) => {
-    const printWindow = window.open('', '_blank');
+    const invoiceCurrency = inv.currency || "INR";
+    const printWindow = window.open("", "_blank");
     const html = `
       <html>
         <head>
@@ -218,7 +257,7 @@ const Billing = () => {
               <div class="status ${inv.status}">${inv.status}</div>
             </div>
             <div class="text-right">
-              <div class="logo">HostelCore</div>
+              <div class="logo">ማረፊያ</div>
               <div style="color: #666; font-size: 14px;">123 University Road, Campus Area</div>
               <div style="color: #666; font-size: 14px;">support@hostelcore.com</div>
             </div>
@@ -227,9 +266,9 @@ const Billing = () => {
           <div class="details-grid">
             <div>
               <div class="section-title">Billed To</div>
-              <div style="font-size: 18px; font-weight: bold; color: #111;">${inv.resident?.name || 'Resident'}</div>
-              <div style="margin-top: 4px; color: #555;">Room ${inv.room?.roomNumber || 'N/A'}</div>
-              <div style="color: #555;">${inv.resident?.email || ''}</div>
+              <div style="font-size: 18px; font-weight: bold; color: #111;">${inv.resident?.name || "Resident"}</div>
+              <div style="margin-top: 4px; color: #555;">Room ${inv.room?.roomNumber || "N/A"}</div>
+              <div style="color: #555;">${inv.resident?.email || ""}</div>
             </div>
             <div class="text-right">
               <div class="section-title">Invoice Details</div>
@@ -244,32 +283,44 @@ const Billing = () => {
             <thead>
               <tr>
                 <th>Description</th>
-                <th class="text-right">Amount (₹)</th>
+                <th class="text-right">Amount (${invoiceCurrency})</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td>Room Rent (Base Fee)</td>
-                <td class="text-right">₹${inv.roomFee}</td>
+                <td class="text-right">${formatCurrency(inv.roomFee, invoiceCurrency)}</td>
               </tr>
-              ${inv.additionalAmount > 0 ? `
+              ${
+                inv.additionalAmount > 0
+                  ? `
               <tr>
-                <td>Additional Service: ${inv.additionalService || 'Misc Services'}</td>
-                <td class="text-right">₹${inv.additionalAmount}</td>
-              </tr>` : ''}
-              ${inv.lateFee > 0 ? `
+                <td>Additional Service: ${inv.additionalService || "Misc Services"}</td>
+                <td class="text-right">${formatCurrency(inv.additionalAmount, invoiceCurrency)}</td>
+              </tr>`
+                  : ""
+              }
+              ${
+                inv.lateFee > 0
+                  ? `
               <tr>
                 <td>Late Fee Penalty</td>
-                <td class="text-right">₹${inv.lateFee}</td>
-              </tr>` : ''}
-              ${inv.discount > 0 ? `
+                <td class="text-right">${formatCurrency(inv.lateFee, invoiceCurrency)}</td>
+              </tr>`
+                  : ""
+              }
+              ${
+                inv.discount > 0
+                  ? `
               <tr>
                 <td>Discount Applied</td>
-                <td class="text-right" style="color: #166534;">- ₹${inv.discount}</td>
-              </tr>` : ''}
+                <td class="text-right" style="color: #166534;">- ${formatCurrency(inv.discount, invoiceCurrency)}</td>
+              </tr>`
+                  : ""
+              }
               <tr class="total-row">
                 <td>Total Amount Payable</td>
-                <td class="text-right">₹${inv.totalAmount}</td>
+                <td class="text-right">${formatCurrency(inv.totalAmount, invoiceCurrency)}</td>
               </tr>
             </tbody>
           </table>
@@ -293,18 +344,25 @@ const Billing = () => {
 
   const getStatusBadge = (status) => {
     const styles = {
-      'Paid': 'bg-green-100 text-green-700 border-green-200',
-      'Pending': 'bg-yellow-100 text-yellow-700 border-yellow-200',
-      'Failed': 'bg-red-100 text-red-700 border-red-200'
+      Paid: "bg-green-100 text-green-700 border-green-200",
+      Pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
+      Failed: "bg-red-100 text-red-700 border-red-200",
     };
     return (
-      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${styles[status] || styles.Pending}`}>
+      <span
+        className={`px-2.5 py-1 rounded-full text-xs font-bold border ${styles[status] || styles.Pending}`}
+      >
         {status}
       </span>
     );
   };
 
-  if (loading) return <div className="p-12 text-center text-gray-500 font-medium">Loading Billing Module...</div>;
+  if (loading)
+    return (
+      <div className="p-12 text-center text-gray-500 font-medium">
+        Loading Billing Module...
+      </div>
+    );
 
   return (
     <div className="max-w-6xl mx-auto px-4 lg:px-0">
@@ -314,13 +372,17 @@ const Billing = () => {
             <Receipt size={24} />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Billing & Payments</h2>
-            <p className="text-sm text-gray-500">Manage room fees, services, and transactions.</p>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Billing & Payments
+            </h2>
+            <p className="text-sm text-gray-500">
+              Manage room fees, services, and transactions.
+            </p>
           </div>
         </div>
-        
-        {(user?.role === 'admin' || user?.role === 'staff') && (
-          <button 
+
+        {(user?.role === "admin" || user?.role === "staff") && (
+          <button
             onClick={() => setIsModalOpen(true)}
             className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg flex items-center justify-center gap-2 transition-all transform active:scale-95 shadow-md font-semibold"
           >
@@ -335,35 +397,64 @@ const Billing = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Resident / Room</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Month</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Total Amount</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Due Date</th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">Action</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Resident / Room
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Month
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Total Amount
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Due Date
+                </th>
+                <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
               {invoices.map((inv) => (
-                <tr key={inv._id} className="hover:bg-gray-50/50 transition-colors">
+                <tr
+                  key={inv._id}
+                  className="hover:bg-gray-50/50 transition-colors"
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-bold text-gray-900">{inv.resident?.name || 'Self'}</div>
+                    <div className="text-sm font-bold text-gray-900">
+                      {inv.resident?.name || "Self"}
+                    </div>
                     <div className="text-xs text-gray-500 flex items-center gap-1">
-                      <Clock size={12} /> Room {inv.room?.roomNumber || 'N/A'}
+                      <Clock size={12} /> Room {inv.room?.roomNumber || "N/A"}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-medium">{inv.month}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-black text-gray-900">₹{inv.totalAmount}</div>
-                    <div className="text-[10px] text-gray-400 font-medium">Base: ₹{inv.roomFee}</div>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-medium">
+                    {inv.month}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(inv.status)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-black text-gray-900">
+                      {formatCurrency(inv.totalAmount, inv.currency || "INR")}
+                    </div>
+                    <div className="text-[10px] text-gray-400 font-medium">
+                      Base: {formatCurrency(inv.roomFee, inv.currency || "INR")}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {getStatusBadge(inv.status)}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
-                    {new Date(inv.dueDate).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {new Date(inv.dueDate).toLocaleDateString(undefined, {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
                     <div className="flex items-center justify-end gap-3">
-                      <button 
+                      <button
                         onClick={() => handleDownloadInvoice(inv)}
                         title="Download / Print Invoice"
                         className="text-gray-400 hover:text-indigo-600 p-1.5 hover:bg-indigo-50 rounded-lg transition-colors"
@@ -371,19 +462,18 @@ const Billing = () => {
                         <Download size={18} />
                       </button>
 
-                      {inv.status !== 'Paid' ? (
+                      {inv.status !== "Paid" ? (
                         <>
-                          {/* 🔴 THIS IS WHERE THE PHONEPE BUTTON SHOWS FOR RESIDENTS */}
-                          {(user?.role === 'resident') ? (
-                            <button 
+                          {user?.role === "resident" ? (
+                            <button
                               onClick={() => handleOnlinePayment(inv._id)}
                               disabled={paymentLoading}
                               className="inline-flex items-center gap-1.5 bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-1.5 rounded-lg text-xs font-black transition-all shadow-sm disabled:opacity-60"
                             >
-                              <CreditCard size={14} /> Pay via PhonePe
+                              <CreditCard size={14} /> Pay via Chapa
                             </button>
                           ) : (
-                            <button 
+                            <button
                               onClick={() => handleManualPayment(inv._id)}
                               className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 px-4 py-1.5 rounded-lg text-xs font-black transition-all"
                             >
@@ -393,7 +483,7 @@ const Billing = () => {
                         </>
                       ) : (
                         <span className="text-green-600 flex items-center justify-end gap-1.5 text-xs font-black bg-green-50 px-3 py-1.5 rounded-lg w-fit ml-auto border border-green-100">
-                          <CheckCircle size={14}/> Invoice Paid
+                          <CheckCircle size={14} /> Invoice Paid
                         </span>
                       )}
                     </div>
@@ -402,7 +492,10 @@ const Billing = () => {
               ))}
               {invoices.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="px-6 py-16 text-center text-gray-400 italic">
+                  <td
+                    colSpan="6"
+                    className="px-6 py-16 text-center text-gray-400 italic"
+                  >
                     <div className="flex flex-col items-center gap-2">
                       <Receipt size={40} className="text-gray-200" />
                       <span>No billing history found.</span>
@@ -425,79 +518,174 @@ const Billing = () => {
                   <Plus size={20} />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-800">New Bill Generation</h3>
-                  <p className="text-xs text-gray-500 mt-1">Create a resident invoice with fees, discounts, and due date.</p>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-800">
+                    New Bill Generation
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Create a resident invoice with fees, discounts, and due
+                    date.
+                  </p>
                 </div>
               </div>
-              <button 
-                onClick={() => setIsModalOpen(false)} 
+              <button
+                onClick={() => setIsModalOpen(false)}
                 className="text-gray-400 hover:text-gray-600 w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition shrink-0"
                 aria-label="Close invoice modal"
               >
                 ✕
               </button>
             </div>
-            
-            <form onSubmit={handleGenerateInvoice} className="p-4 sm:p-6 md:p-8 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+
+            <form
+              onSubmit={handleGenerateInvoice}
+              className="p-4 sm:p-6 md:p-8 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6"
+            >
               <div className="sm:col-span-2">
-                <label className="block text-xs font-black text-gray-400 uppercase mb-2 tracking-widest">Select Resident *</label>
-                <select 
-                  required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition" 
-                  value={formData.residentId} 
-                  onChange={(e) => setFormData({...formData, residentId: e.target.value})}
+                <label className="block text-xs font-black text-gray-400 uppercase mb-2 tracking-widest">
+                  Select Resident *
+                </label>
+                <select
+                  required
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition"
+                  value={formData.residentId}
+                  onChange={(e) =>
+                    setFormData({ ...formData, residentId: e.target.value })
+                  }
                 >
-                  <option value="">Choose resident with assigned room...</option>
-                  {residents.map(r => (
-                    <option key={r._id} value={r._id}>{r.name} — Room {r.assignedRoom?.roomNumber || '?'}</option>
+                  <option value="">
+                    Choose resident with assigned room...
+                  </option>
+                  {residents.map((r) => (
+                    <option key={r._id} value={r._id}>
+                      {r.name} — Room {r.assignedRoom?.roomNumber || "?"}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-black text-gray-400 uppercase mb-2 tracking-widest">Billing Month *</label>
-                <input type="text" placeholder="e.g., November 2023" required minLength="3" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition" value={formData.month} onChange={(e) => setFormData({...formData, month: e.target.value})} />
+                <label className="block text-xs font-black text-gray-400 uppercase mb-2 tracking-widest">
+                  Billing Month *
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., November 2023"
+                  required
+                  minLength="3"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition"
+                  value={formData.month}
+                  onChange={(e) =>
+                    setFormData({ ...formData, month: e.target.value })
+                  }
+                />
               </div>
 
               <div>
-                <label className="block text-xs font-black text-gray-400 uppercase mb-2 tracking-widest">Due Date *</label>
-                <input type="date" required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition" value={formData.dueDate} onChange={(e) => setFormData({...formData, dueDate: e.target.value})} />
+                <label className="block text-xs font-black text-gray-400 uppercase mb-2 tracking-widest">
+                  Due Date *
+                </label>
+                <input
+                  type="date"
+                  required
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition"
+                  value={formData.dueDate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, dueDate: e.target.value })
+                  }
+                />
               </div>
 
               <div className="sm:col-span-2 flex items-start gap-2 p-3 bg-blue-50 text-blue-700 rounded-xl text-xs font-medium border border-blue-100">
-                <AlertCircle size={14} className="mt-0.5 shrink-0" /> 
-                <span>Room fee is automatically fetched from the resident's current room assignment.</span>
+                <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                <span>
+                  Room fee is automatically fetched from the resident's current
+                  room assignment.
+                </span>
               </div>
 
               <div>
-                <label className="block text-xs font-black text-gray-400 uppercase mb-2 tracking-widest">Extra Service</label>
-                <input type="text" placeholder="e.g., Laundry / Mess" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition" value={formData.additionalService} onChange={(e) => setFormData({...formData, additionalService: e.target.value})} />
+                <label className="block text-xs font-black text-gray-400 uppercase mb-2 tracking-widest">
+                  Extra Service
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., Laundry / Mess"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition"
+                  value={formData.additionalService}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      additionalService: e.target.value,
+                    })
+                  }
+                />
               </div>
 
               <div>
-                <label className="block text-xs font-black text-gray-400 uppercase mb-2 tracking-widest">Extra Amount (₹)</label>
-                <input type="number" min="0" step="1" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition" value={formData.additionalAmount} onChange={(e) => setFormData({...formData, additionalAmount: e.target.value})} />
+                <label className="block text-xs font-black text-gray-400 uppercase mb-2 tracking-widest">
+                  Extra Amount ({BILLING_CURRENCY})
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition"
+                  value={formData.additionalAmount}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      additionalAmount: e.target.value,
+                    })
+                  }
+                />
               </div>
 
               <div>
-                <label className="block text-xs font-black text-red-400 uppercase mb-2 tracking-widest">Late Fee (₹)</label>
-                <input type="number" min="0" step="1" className="w-full p-3 bg-red-50 border border-red-100 rounded-xl focus:ring-2 focus:ring-red-500 outline-none transition text-red-700" value={formData.lateFee} onChange={(e) => setFormData({...formData, lateFee: e.target.value})} />
+                <label className="block text-xs font-black text-red-400 uppercase mb-2 tracking-widest">
+                  Late Fee ({BILLING_CURRENCY})
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  className="w-full p-3 bg-red-50 border border-red-100 rounded-xl focus:ring-2 focus:ring-red-500 outline-none transition text-red-700"
+                  value={formData.lateFee}
+                  onChange={(e) =>
+                    setFormData({ ...formData, lateFee: e.target.value })
+                  }
+                />
               </div>
 
               <div>
-                <label className="block text-xs font-black text-green-600 uppercase mb-2 tracking-widest">Discount (₹)</label>
-                <input type="number" min="0" step="1" className="w-full p-3 bg-green-50 border border-green-100 rounded-xl focus:ring-2 focus:ring-green-600 outline-none transition text-green-700" value={formData.discount} onChange={(e) => setFormData({...formData, discount: e.target.value})} />
+                <label className="block text-xs font-black text-green-600 uppercase mb-2 tracking-widest">
+                  Discount ({BILLING_CURRENCY})
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  className="w-full p-3 bg-green-50 border border-green-100 rounded-xl focus:ring-2 focus:ring-green-600 outline-none transition text-green-700"
+                  value={formData.discount}
+                  onChange={(e) =>
+                    setFormData({ ...formData, discount: e.target.value })
+                  }
+                />
               </div>
 
               <div className="sm:col-span-2 sticky bottom-0 bg-white pt-4 sm:pt-6 border-t flex flex-col-reverse sm:flex-row justify-end gap-3 mt-2 sm:mt-4">
-                <button 
-                  type="button" 
-                  onClick={() => setIsModalOpen(false)} 
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
                   className="w-full sm:w-auto px-6 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition"
-                >Cancel</button>
-                <button 
-                  type="submit" 
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
                   className="w-full sm:w-auto px-8 py-3 bg-indigo-600 text-white rounded-xl font-black shadow-lg hover:bg-indigo-700 active:scale-95 transition-all"
-                >Confirm & Generate</button>
+                >
+                  Confirm & Generate
+                </button>
               </div>
             </form>
           </div>

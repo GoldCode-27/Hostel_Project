@@ -61,13 +61,15 @@ const userRoutes = require("./routes/userRoutes");
 const maintenanceRoutes = require("./routes/maintenanceRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const billingRoutes = require("./routes/billingRoutes"); // NEW
-
+const assistantRoutes = require("./routes/assistantRoutes");
+ 
 app.use("/api/rooms", ensureDatabase, roomRoutes);
 app.use("/api/auth", ensureDatabase, authRoutes);
 app.use("/api/users", ensureDatabase, userRoutes);
 app.use("/api/maintenance", ensureDatabase, maintenanceRoutes);
 app.use("/api/notifications", ensureDatabase, notificationRoutes);
 app.use("/api/billing", ensureDatabase, billingRoutes); // NEW
+app.use("/api/assistant", ensureDatabase, assistantRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hostel Management API is running!");

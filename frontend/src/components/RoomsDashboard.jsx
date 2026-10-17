@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { API_BASE_URL } from '../config/api';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { API_BASE_URL } from "../config/api";
+import { formatCurrency } from "../config/currency";
 
 const RoomsDashboard = () => {
   const [rooms, setRooms] = useState([]);
@@ -30,29 +31,40 @@ const RoomsDashboard = () => {
   return (
     <div className="mt-8">
       <h2 className="text-2xl font-semibold mb-4">Available Rooms</h2>
-      
+
       {/* Grid to display rooms */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {rooms.map((room) => (
-          <div key={room._id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
-            <h3 className="text-xl font-bold text-gray-800">Room {room.roomNumber}</h3>
+          <div
+            key={room._id}
+            className="bg-white p-6 rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow"
+          >
+            <h3 className="text-xl font-bold text-gray-800">
+              Room {room.roomNumber}
+            </h3>
             <div className="mt-2 text-gray-600">
               <p>Capacity: {room.capacity} beds</p>
-              <p>Price: ₹{room.pricePerMonth} / month</p>
+              <p>Price: {formatCurrency(room.pricePerMonth)} / month</p>
             </div>
             <div className="mt-4">
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                room.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  room.status === "available"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
                 {room.status.toUpperCase()}
               </span>
             </div>
           </div>
         ))}
       </div>
-      
+
       {rooms.length === 0 && (
-        <p className="text-gray-500 italic">No rooms found. Go to Thunder Client and add some!</p>
+        <p className="text-gray-500 italic">
+          No rooms found. Go to Thunder Client and add some!
+        </p>
       )}
     </div>
   );
